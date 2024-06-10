@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Transactions;
 using apbd_kol2_example.Services;
 using apbd_kol2.DTOs;
+using ExampleTest2.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace apbd_kol2.Controllers;
@@ -43,26 +45,63 @@ public class Controller : ControllerBase
         // check if client exists
         if (!await _service.DoesClientExist(clientId))
         {
-            return BadRequest("Client does not exist");
+            return NotFound("Client does not exist");
         }
         // check if employee exists
         if (!await _service.DoesEmployeeExist(newOrderInfoDto.employeeId))
         {
-            return BadRequest("Employee does not exist");
+            return NotFound("Employee does not exist");
         }
         // check if all pastries exist
         foreach (var pastry in newOrderInfoDto.pastries)
         {
             if (!await _service.DoesPastryExist(pastry.Name))
             {
-                return BadRequest("Pastry does not exist");
+                return NotFound("Pastry does not exist");
             }
         }
         
-        // add order and pastries to db
-        var orderId = await _service.AddOrder(newOrderInfoDto, clientId);
+        // create order
+        var order = new Order
+        {
+            ClientId = clientId,
+            EmployeeId = newOrderInfoDto.employeeId,
+            AcceptedAt = newOrderInfoDto.acceptedAt,
+            Comments = newOrderInfoDto.comments
+        };
         
-        return Ok("Order added with id: " + orderId);
+        // create pastries
+        var pastries = new List<OrderPastry>();
+        foreach (var pastry in newOrderInfoDto.pastries)
+        {
+            pastries.Add(new OrderPastry
+            {
+                OrderId = order.Id,
+                PastryId = await _service.GetPastryId(pastry.Name),
+                Amount = pastry.Amount,
+                Comment = pastry.Comment
+            });
+        }
+
+        // add order and pastries to db
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            await _service.AddOrder(order);
+            await _service.AddOrderPastries(pastries);
+    
+            scope.Complete();
+        }
+    
+        return Created("api/orders", new
+        {
+            order.Id,
+            order.AcceptedAt,
+            order.FulfilledAt,
+            order.Comments,
+        });
+        
+        
+        
     }
     
     

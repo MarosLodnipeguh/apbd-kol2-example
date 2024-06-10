@@ -1,4 +1,5 @@
 ﻿using apbd_kol2.DTOs;
+using ExampleTest2.Models;
 
 namespace apbd_kol2_example.Services;
 
@@ -13,8 +14,8 @@ public interface IDbService
     Task<bool> DoesEmployeeExist(int employeeId);
     Task<bool> DoesPastryExist(string pastryName);
     Task<int> GetPastryId(string pastryName);
-    Task<int> AddOrder(NewOrderInfoDto newOrderInfoDto, int clientId);
-    Task<int> AddOrderPastry(NewOrderPastryDto newOrderPastryDto, int orderId);
+    Task AddOrder(Order order);
+    Task AddOrderPastries(IEnumerable<OrderPastry> orderPastries);
 
 
     

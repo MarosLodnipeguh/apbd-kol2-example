@@ -112,14 +112,12 @@ public class DbService : IDbService
 
     public async Task<bool> DoesClientExist(int clientId)
     {
-        var client = await _context.Clients.FirstOrDefaultAsync(c => c.Id == clientId);
-        return client != null;
+        return await _context.Clients.AnyAsync(e => e.Id == clientId);
     }
 
     public async Task<bool> DoesEmployeeExist(int employeeId)
     {
-        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employeeId);
-        return employee != null;
+        return await _context.Employees.AnyAsync(e => e.Id == employeeId);
     }
     
     public async Task<bool> DoesPastryExist(string pastryName)
@@ -128,43 +126,16 @@ public class DbService : IDbService
         return pastry != null;
     }
 
-    public async Task<int> AddOrder(NewOrderInfoDto newOrderInfoDto, int clientId)
+    public async Task AddOrder(Order order)
     {
-        var order = new Order
-        {
-            AcceptedAt = DateTime.Now,
-            FulfilledAt = null,
-            Comments = newOrderInfoDto.comments,
-            ClientId = clientId,
-            EmployeeId = newOrderInfoDto.employeeId,
-        };
-
-        await _context.Orders.AddAsync(order);
+        await _context.AddAsync(order);
         await _context.SaveChangesAsync();
-
-        // add pastries to order
-        foreach (var pastry in newOrderInfoDto.pastries)
-        {
-            await AddOrderPastry(pastry, order.Id);
-        }
-        
-        return order.Id;
     }
 
-    public async Task<int> AddOrderPastry(NewOrderPastryDto newOrderPastryDto, int orderId)
+    public async Task AddOrderPastries(IEnumerable<OrderPastry> orderPastries)
     {
-        var orderPastry = new OrderPastry
-        {
-            OrderId = orderId,
-            PastryId = await GetPastryId(newOrderPastryDto.Name),
-            Amount = newOrderPastryDto.Amount,
-            Comment = newOrderPastryDto.Comment
-        };
-
-        await _context.OrderPastries.AddAsync(orderPastry);
+        await _context.AddRangeAsync(orderPastries);
         await _context.SaveChangesAsync();
-
-        return orderPastry.OrderId;
     }
     
     public async Task<int> GetPastryId(string pastryName)
