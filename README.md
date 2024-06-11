@@ -14,3 +14,14 @@ commands:
 
 1. utwórz modele - folder Models
 2. utwórz ApplicationContext - folder Data
+
+### Scaffold:
+dotnet ef dbcontext scaffold "Name=ConnectionStrings:Default" Microsoft.EntityFrameworkCore.SqlServer --context-dir Data --output-dir Models
+
+### Models:
+[MaxLength(100)]
+
+[ForeignKey(nameof(OrderId))]
+    public Order Order { get; set; } = null!;
+
+public ICollection<OrderPastry> OrderPastries { get; set; } = new HashSet<OrderPastry>();
