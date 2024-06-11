@@ -1,5 +1,6 @@
 walidacja danych zawsze wywoływana w kontrolerze i tam zwracam BadRequest/NotFound! przed wywołaniem jakichkolwiek transakcji (dodających na przykład) do bazy danych
 
+(localdb)\MSSQLLocalDB
 
 - dotnet tool install --global dotnet-ef
 
